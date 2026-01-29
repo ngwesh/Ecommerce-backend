@@ -7,7 +7,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final String secret = "MySuperSecretKey12345"; // use env variable in prod
+    private final String secret = "9wE7pY2zR5vN8xK3mQ6jB1fH4tS9uV2cC5xA8oM1zL7=";
     private final long expirationMs = 86400000; // 24h
 
     public String generateToken(String email) {
