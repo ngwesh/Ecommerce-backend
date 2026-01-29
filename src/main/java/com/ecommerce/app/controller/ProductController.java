@@ -1,29 +1,39 @@
 package com.ecommerce.app.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ecommerce.app.entity.Product;
 import com.ecommerce.app.repository.ProductRepository;
+import com.ecommerce.app.service.CloudinaryService;
 
-import java.util.List;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/products")
+@CrossOrigin(origins = "*")
 public class ProductController {
 
-    private final ProductRepository repo;
+    private final ProductRepository productRepository;
+    private final CloudinaryService cloudinaryService;
 
-    public ProductController(ProductRepository repo) {
-        this.repo = repo;
+    public ProductController(ProductRepository productRepository,
+                             CloudinaryService cloudinaryService) {
+        this.productRepository = productRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
-    @GetMapping
-    public List<Product> getAll() {
-        return repo.findAll();
-    }
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Product createProduct(
+            @RequestPart("product") Product product,
+            @RequestPart("image") MultipartFile image
+    ) throws IOException {
 
-    @PostMapping
-    public Product create(@RequestBody Product product) {
-        return repo.save(product);
+        String imageUrl = cloudinaryService.uploadImage(image);
+        product.setImageUrl(imageUrl);
+
+        return productRepository.save(product);
     }
 }
+

@@ -9,6 +9,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "products")
 public class Product {
 
     @Id
@@ -16,7 +17,9 @@ public class Product {
     private Long id;
 
     private String name;
+    private Double price;
     private String description;
-    private double price;
-    private int stock;
+
+    @Column(length = 500)
+    private String imageUrl;
 }

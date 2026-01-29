@@ -1,5 +1,7 @@
 package com.ecommerce.app.entity;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,4 +26,10 @@ public class User {
     @Column(nullable = false)
     private String password;
     private String role; // USER, ADMIN
+
+    @OneToMany(mappedBy = "user")
+    private List<Address> addresses;
+    
+    @OneToMany(mappedBy = "user")
+    private List<PaymentMethod> paymentMethods;
 }
