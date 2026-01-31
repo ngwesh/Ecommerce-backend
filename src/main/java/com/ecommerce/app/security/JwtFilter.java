@@ -1,7 +1,11 @@
 package com.ecommerce.app.security;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,11 +28,25 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            if (jwtUtil.validateToken(token)) {
-                // we skip Authentication object for now
-                // set SecurityContext here for advanced usage
+            try {
+                if (jwtUtil.validateToken(token)) {
+                    String email = jwtUtil.extractEmail(token);
+
+                    // This is the missing piece:
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(email,
+                            null, new ArrayList<>());
+
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    // Tell Spring Security: "This user is valid!"
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                // If token extraction fails, SecurityContext remains empty, leading to 403
+                SecurityContextHolder.clearContext();
             }
         }
 
