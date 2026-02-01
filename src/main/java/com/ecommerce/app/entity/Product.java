@@ -1,9 +1,9 @@
 package com.ecommerce.app.entity;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 
 @Entity
 @Getter
@@ -25,10 +25,7 @@ public class Product {
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id") 
-    @JsonIgnoreProperties("products") 
-    @ToString.Exclude      
-    @EqualsAndHashCode.Exclude 
+    @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Category category;
 }
-
