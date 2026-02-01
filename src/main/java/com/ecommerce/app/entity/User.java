@@ -1,5 +1,6 @@
 package com.ecommerce.app.entity;
 
+import java.sql.Date;
 import java.util.List;
 
 import jakarta.persistence.*;
@@ -22,7 +23,17 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
     @Column(nullable = false)
-    private String name;
+    private String firstName;
+    @Column(nullable = true)
+    private String middleName;
+    @Column(nullable = false)
+    private String lastName;
+    @Column(nullable = true)
+    private String phone;
+    @Column(nullable = true)
+    private Date dob;
+    @Column(nullable = true)
+    private String gender;
     @Column(nullable = false)
     private String password;
     private String role; // USER, ADMIN

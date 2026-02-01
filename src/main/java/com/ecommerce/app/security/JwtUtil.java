@@ -5,6 +5,8 @@ import io.jsonwebtoken.security.Keys;
 
 import org.springframework.stereotype.Component;
 
+import com.ecommerce.app.entity.User;
+
 import java.security.Key;
 import java.util.Date;
 
@@ -18,26 +20,31 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String email) {
+    public String generateToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs); // Using your variable here!
 
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now) // Start time
-                .setExpiration(expiryDate) // End time
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
+            .setSubject(user.getEmail())
+            .claim("id", user.getId())
+            .claim("firstName", user.getFirstName())
+            .claim("lastName", user.getLastName())
+            .claim("email", user.getEmail())
+            .claim("role", user.getRole())
+            .setIssuedAt(now)
+            .setExpiration(expiryDate)
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .compact();
     }
 
     public boolean validateToken(String token) {
         try {
-            // Use parserBuilder() and setSigningKey(getSigningKey()) 
+            // Use parserBuilder() and setSigningKey(getSigningKey())
             // for consistency with how you sign it.
             Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token);
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
             System.out.println("Token expired: " + e.getMessage());
@@ -56,4 +63,3 @@ public class JwtUtil {
                 .getSubject();
     }
 }
-
