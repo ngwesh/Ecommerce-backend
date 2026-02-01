@@ -14,7 +14,8 @@ public class CloudinaryConfig {
 
     @Bean
     public Cloudinary cloudinary() {
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Dotenv.configure()
+        .ignoreIfMissing().load();
 
         Map<String, String> config = new HashMap<>();
         config.put("cloud_name", dotenv.get("CLOUDINARY_CLOUD_NAME"));
