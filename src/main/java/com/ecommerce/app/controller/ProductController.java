@@ -1,8 +1,13 @@
 package com.ecommerce.app.controller;
 
+import com.ecommerce.app.entity.Category;
 import com.ecommerce.app.entity.Product;
+import com.ecommerce.app.repository.CategoryRepository;
 import com.ecommerce.app.repository.ProductRepository;
 import com.ecommerce.app.service.CloudinaryService;
+
+import io.jsonwebtoken.io.IOException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +25,14 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository; // Need this now
     private final CloudinaryService cloudinaryService;
 
-    public ProductController(ProductRepository productRepository, CloudinaryService cloudinaryService) {
+    public ProductController(ProductRepository productRepository,
+            CategoryRepository categoryRepository,
+            CloudinaryService cloudinaryService) {
         this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
         this.cloudinaryService = cloudinaryService;
     }
 
@@ -31,82 +40,87 @@ public class ProductController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
             @RequestPart("product") Product product,
+            @RequestParam("categoryId") Long categoryId,
             @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
+            Optional<Category> categoryOptional = categoryRepository.findById(categoryId);
+
+            if (categoryOptional.isEmpty()) {
+                return buildErrorResponse("Category not found with ID: " + categoryId, HttpStatus.NOT_FOUND);
+            }
+
+            Category category = categoryOptional.get();
             if (image != null && !image.isEmpty()) {
                 String imageUrl = cloudinaryService.uploadImage(image);
                 product.setImageUrl(imageUrl);
             }
+
+            product.setCategory(category);
             Product savedProduct = productRepository.save(product);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
+
+        } catch (IOException e) {
+            return buildErrorResponse("Image upload failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             return buildErrorResponse("Error creating product: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    //READ ALL
+    //GET ALL
     @GetMapping
-    public ResponseEntity<?> getAllProducts() {
+    public ResponseEntity<List<Product>> getAllCategories() {
+        return ResponseEntity.ok(productRepository.findAll());
+    }
+
+    // UPDATE
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @RequestPart("product") Product productDetails,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
-            List<Product> products = productRepository.findAll();
-            return ResponseEntity.ok(products);
+            Optional<Product> productOptional = productRepository.findById(id);
+
+            if (productOptional.isEmpty()) {
+                return buildErrorResponse("Product not found", HttpStatus.NOT_FOUND);
+            }
+
+            Product existingProduct = productOptional.get();
+            existingProduct.setName(productDetails.getName());
+            existingProduct.setPrice(productDetails.getPrice());
+            existingProduct.setDescription(productDetails.getDescription());
+
+            // Update category if a new ID is provided
+            if (categoryId != null) {
+                categoryRepository.findById(categoryId).ifPresent(existingProduct::setCategory);
+            }
+
+            // Update image if provided
+            if (image != null && !image.isEmpty()) {
+                try {
+                    String newImageUrl = cloudinaryService.uploadImage(image);
+                    existingProduct.setImageUrl(newImageUrl);
+                } catch (IOException e) {
+                    return buildErrorResponse("Image upload failed", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+
+            return ResponseEntity.ok(productRepository.save(existingProduct));
+
         } catch (Exception e) {
-            return buildErrorResponse("Could not fetch products", HttpStatus.INTERNAL_SERVER_ERROR);
+            return buildErrorResponse("Update failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-// READ ONE
-@GetMapping("/{id}")
-public ResponseEntity<?> getProductById(@PathVariable Long id) {
-    try {
-        Optional<Product> product = productRepository.findById(id);
-        if (product.isPresent()) {
-            return ResponseEntity.ok(product.get());
-        } else {
-            return buildErrorResponse("Product not found with id: " + id, HttpStatus.NOT_FOUND);
-        }
-    } catch (Exception e) {
-        return buildErrorResponse("Error fetching product", HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-}
-
-// UPDATE - Fixed
-@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<?> updateProduct(
-        @PathVariable Long id,
-        @RequestPart("product") Product productDetails,
-        @RequestPart(value = "image", required = false) MultipartFile image) {
-    try {
-        Optional<Product> productOptional = productRepository.findById(id);
-        
-        if (productOptional.isEmpty()) {
-            return buildErrorResponse("Product not found with id: " + id, HttpStatus.NOT_FOUND);
-        }
-
-        Product existingProduct = productOptional.get();
-        existingProduct.setName(productDetails.getName());
-        existingProduct.setPrice(productDetails.getPrice());
-        existingProduct.setDescription(productDetails.getDescription());
-
-        if (image != null && !image.isEmpty()) {
-            String newImageUrl = cloudinaryService.uploadImage(image);
-            existingProduct.setImageUrl(newImageUrl);
-        }
-
-        Product updatedProduct = productRepository.save(existingProduct);
-        return ResponseEntity.ok(updatedProduct);
-        
-    } catch (Exception e) {
-        return buildErrorResponse("Update failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-}
-
-// Helper method for consistent JSON error responses
+    // Helper method for consistent JSON error responses
     private ResponseEntity<Map<String, Object>> buildErrorResponse(String message, HttpStatus status) {
         Map<String, Object> error = new HashMap<>();
         error.put("timestamp", System.currentTimeMillis());
         error.put("message", message);
         error.put("status", status.value());
+        error.put("error", status.getReasonPhrase());
         return new ResponseEntity<>(error, status);
     }
 }

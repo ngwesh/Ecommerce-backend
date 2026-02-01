@@ -1,4 +1,5 @@
 package com.ecommerce.app.entity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,4 +23,12 @@ public class Product {
 
     @Column(length = 500)
     private String imageUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id") 
+    @JsonIgnoreProperties("products") 
+    @ToString.Exclude      
+    @EqualsAndHashCode.Exclude 
+    private Category category;
 }
+
