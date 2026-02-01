@@ -25,7 +25,7 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository; // Need this now
+    private final CategoryRepository categoryRepository;
     private final CloudinaryService cloudinaryService;
 
     public ProductController(ProductRepository productRepository,
@@ -39,7 +39,9 @@ public class ProductController {
     //CREATE
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
-            @RequestPart("product") Product product,
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") String price,
             @RequestParam("categoryId") Long categoryId,
             @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
@@ -49,6 +51,8 @@ public class ProductController {
                 return buildErrorResponse("Category not found with ID: " + categoryId, HttpStatus.NOT_FOUND);
             }
 
+            Product product = new Product();
+
             Category category = categoryOptional.get();
             if (image != null && !image.isEmpty()) {
                 String imageUrl = cloudinaryService.uploadImage(image);
@@ -56,6 +60,9 @@ public class ProductController {
             }
 
             product.setCategory(category);
+            product.setName(name);
+            product.setDescription(description);
+            product.setPrice(Double.parseDouble(price));
             Product savedProduct = productRepository.save(product);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
