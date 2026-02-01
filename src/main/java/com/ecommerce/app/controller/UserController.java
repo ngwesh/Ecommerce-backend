@@ -65,7 +65,7 @@ public ResponseEntity<?> login(@RequestBody User user) {
 
         //Validate password
         if (passwordEncoder.matches(user.getPassword(), existing.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.getEmail());
+            String token = jwtUtil.generateToken(existing.get());
             return ResponseEntity.ok(token);
         }
 
