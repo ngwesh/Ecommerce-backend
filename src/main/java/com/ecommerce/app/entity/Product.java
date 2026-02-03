@@ -1,6 +1,6 @@
 package com.ecommerce.app.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,12 +20,13 @@ public class Product {
     private String name;
     private Double price;
     private String description;
+    private Long stock;
 
     @Column(length = 500)
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnore
     private Category category;
 }
