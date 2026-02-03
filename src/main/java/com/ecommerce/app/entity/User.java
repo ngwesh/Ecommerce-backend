@@ -31,7 +31,7 @@ public class User {
     @Column(nullable = true)
     private String phone;
     @Column(nullable = true)
-    private Date dob;
+    private Date dateOfBirth;
     @Column(nullable = true)
     private String gender;
     @Column(nullable = false)
