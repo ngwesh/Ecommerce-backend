@@ -1,13 +1,17 @@
 package com.ecommerce.app.controller;
 
+import com.ecommerce.app.dto.ProductFilterRequest;
 import com.ecommerce.app.entity.Category;
 import com.ecommerce.app.entity.Product;
 import com.ecommerce.app.repository.CategoryRepository;
 import com.ecommerce.app.repository.ProductRepository;
 import com.ecommerce.app.service.CloudinaryService;
+import com.ecommerce.app.specification.ProductSpecification;
 
 import io.jsonwebtoken.io.IOException;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +47,7 @@ public class ProductController {
             @RequestParam("description") String description,
             @RequestParam("price") String price,
             @RequestParam("categoryId") Long categoryId,
+            @RequestParam("stock") Long stock,
             @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
             Optional<Category> categoryOptional = categoryRepository.findById(categoryId);
@@ -63,6 +68,7 @@ public class ProductController {
             product.setName(name);
             product.setDescription(description);
             product.setPrice(Double.parseDouble(price));
+            product.setStock(stock);
             Product savedProduct = productRepository.save(product);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
@@ -72,6 +78,25 @@ public class ProductController {
         } catch (Exception e) {
             return buildErrorResponse("Error creating product: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("/filter")
+    public ResponseEntity<?> getFilteredProducts(@RequestBody ProductFilterRequest filterRequest) {
+        try{
+        Sort sort = Sort.unsorted();
+        if (filterRequest.sort() != null) {
+            sort = switch (filterRequest.sort()) {
+                case "price_low" -> Sort.by("price").ascending();
+                case "price_high" -> Sort.by("price").descending();
+                default -> Sort.by("id").descending();
+            };
+        }
+
+        Specification<Product> spec = ProductSpecification.withFilters(filterRequest);
+        return ResponseEntity.ok(productRepository.findAll(spec, sort));
+    } catch(Exception e){
+        return buildErrorResponse("Update failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
     }
 
     //GET ALL

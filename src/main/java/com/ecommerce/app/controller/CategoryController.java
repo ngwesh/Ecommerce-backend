@@ -45,8 +45,8 @@ public class CategoryController {
     
     //GET ALL
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
-        return ResponseEntity.ok(categoryRepository.findAll());
+    public ResponseEntity<?> getAllCategories() {
+        return ResponseEntity.ok(categoryRepository.findAllWithProductCount());
     }
 
     //GET BY ID
