@@ -146,6 +146,34 @@ public class ProductController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteOrder(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (!productRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "Product not found");
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            productRepository.deleteById(id);
+
+            response.put("success", true);
+            response.put("message", "{Product} deleted successfully");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to delete product");
+            response.put("error", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     // Helper method for consistent JSON error responses
     private ResponseEntity<Map<String, Object>> buildErrorResponse(String message, HttpStatus status) {
         Map<String, Object> error = new HashMap<>();
@@ -156,3 +184,4 @@ public class ProductController {
         return new ResponseEntity<>(error, status);
     }
 }
+
