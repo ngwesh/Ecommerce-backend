@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.app.entity.Order;
 import com.ecommerce.app.entity.OrderItem;
-import com.ecommerce.app.messaging.OrderProducer;
 import com.ecommerce.app.repository.OrderRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +23,8 @@ public class OrderController {
 
    @Autowired
    OrderRepository orderRepo;
-   @Autowired
-   OrderProducer producer;
+//    @Autowired
+//    OrderProducer producer;
 
     // CREATE
     @PostMapping
@@ -43,7 +42,7 @@ public class OrderController {
             }
 
             Order saved = orderRepo.save(order);
-            producer.sendOrderCreated(saved);
+            // producer.sendOrderCreated(saved);
 
             response.put("success", true);
             response.put("message", "Order created successfully");
