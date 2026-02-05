@@ -1,6 +1,7 @@
 package com.ecommerce.app.entity;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.*;
@@ -43,4 +44,12 @@ public class User {
     
     @OneToMany(mappedBy = "user")
     private List<PaymentMethod> paymentMethods;
+    
+    @ManyToMany
+    @JoinTable(
+        name = "wishlist",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    private List<Product> wishlist = new ArrayList<>();
 }
